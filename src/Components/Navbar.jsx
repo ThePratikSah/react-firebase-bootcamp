@@ -1,9 +1,26 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
+import fire from "../Firebase";
 import UserStore from "../Store";
 
 function Navbar() {
-  const { userData } = useContext(UserStore);
+  const { userData, setUserData } = useContext(UserStore);
+
+  const signOut = () => {
+    fire
+      .auth()
+      .signOut()
+      .then(() => {
+        setUserData({
+          ...userData,
+          auth: false,
+          data: null,
+        });
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -25,7 +42,7 @@ function Navbar() {
         <div className="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div className="navbar-nav">
             {userData.auth ? (
-              <Link className="nav-link" to="/">
+              <Link onClick={signOut} className="nav-link" to="/">
                 Sign Out
               </Link>
             ) : (
