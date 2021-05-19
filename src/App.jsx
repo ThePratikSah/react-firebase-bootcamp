@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   BrowserRouter as Router,
   Redirect,
@@ -11,31 +11,12 @@ import Login from "./Components/Login";
 import Navbar from "./Components/Navbar";
 import ResetPass from "./Components/ResetPass";
 import Signup from "./Components/Signup";
-import fire from "./Firebase";
 import UserStore from "./Store";
 
 function App() {
   const [userData, setUserData] = useState({
     auth: false,
   });
-
-  useEffect(() => {
-    fire.auth().onAuthStateChanged((user) => {
-      if (user) {
-        setUserData({
-          ...userData,
-          auth: true,
-          data: user,
-        });
-      } else {
-        setUserData({
-          ...userData,
-          auth: false,
-          data: null,
-        });
-      }
-    });
-  }, []);
 
   return (
     <UserStore.Provider value={{ userData, setUserData }}>
