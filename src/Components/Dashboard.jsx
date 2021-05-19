@@ -10,19 +10,47 @@ function Dashboard() {
     userData.data.displayName ? userData.data.displayName : "User"
   );
 
+  const [files, setFiles] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
   const updateProfileModal = async () => {
     try {
       let user = fire.auth().currentUser;
-      await user.updateProfile({
-        displayName: name,
-        photoURL: "https://placekitten.com/200/287",
-      });
+      let childRef = "images";
+      if (!files) return swal("Please select a file", "", "error");
+      setUploading(true);
+      let file = files[0];
+      let storageRef = fire.storage().ref(`${childRef}/${file.name}`);
+      let metaData = {
+        contentType: "image/jpeg",
+      };
 
-      user = fire.auth().currentUser;
-      setUserData({
-        ...userData,
-        data: user,
-      });
+      storageRef
+        .put(file, metaData)
+        .then((response) => {
+          let progress =
+            (response.bytesTransferred / response.totalBytes) * 100;
+          setProgress(progress);
+
+          response.ref.getDownloadURL().then((downloadURL) => {
+            user
+              .updateProfile({
+                displayName: name,
+                photoURL: downloadURL,
+              })
+              .then(() => {
+                swal("Profile updated successfully", "", "success");
+                setUploading(false);
+                user = fire.auth().currentUser;
+                setUserData({
+                  ...userData,
+                  data: user,
+                });
+              });
+          });
+        })
+        .catch((error) => swal(error.message, "Try again later", "error"));
     } catch (error) {
       swal(error.message);
     }
@@ -62,7 +90,7 @@ function Dashboard() {
       <div
         className="modal fade"
         id="updateProfileModal"
-        tabindex="-1"
+        tabIndex="-1"
         aria-labelledby="exampleModalLabel"
         aria-hidden="true"
       >
@@ -92,19 +120,40 @@ function Dashboard() {
                   onChange={(e) => setName(e.target.value)}
                 />
               </div>
-              <div class="mb-3">
-                <label for="formFile" class="form-label">
+              <div className="mb-3">
+                <label htmlFor="formFile" className="form-label">
                   Update image
                 </label>
-                <input class="form-control" type="file" id="formFile" />
+                <input
+                  accept="image/png, image/jpeg"
+                  className="form-control"
+                  type="file"
+                  id="formFile"
+                  onChange={(e) => setFiles(e.target.files)}
+                />
               </div>
+              {uploading ? (
+                <div className="progress">
+                  <div
+                    className="progress-bar"
+                    role="progressbar"
+                    style={{ width: `${progress}%` }}
+                    aria-valuenow="25"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                  >
+                    {progress}%
+                  </div>
+                </div>
+              ) : (
+                ""
+              )}
             </div>
             <div className="modal-footer">
               <button
                 onClick={updateProfileModal}
                 type="button"
                 className="btn btn-success"
-                data-bs-dismiss="modal"
               >
                 Update profile
               </button>
